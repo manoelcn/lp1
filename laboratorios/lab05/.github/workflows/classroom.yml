@@ -1,0 +1,140 @@
+name: Autograding Tests
+on:
+  push:
+  repository_dispatch:
+
+permissions:
+  checks: write
+  actions: read
+  contents: read
+
+jobs:
+  run-autograding-tests:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-classroom[bot]'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build
+        run: make
+
+      - name: Test Soma (+)
+        id: tempo_soma
+        uses: classroom-resources/autograding-io-grader@v1
+        with:
+          test-name: Soma
+          setup-command: ""
+          command: ./tempo
+          input: |
+            1
+            1 20 30
+            2
+            0 50 45
+            4
+            0
+          expected-output: "Soma dos tempos: 02:11:15"
+          comparison-method: contains
+          timeout: 10
+          max-score: 2
+
+      - name: Test Subtracao (-)
+        id: tempo_subtracao
+        uses: classroom-resources/autograding-io-grader@v1
+        with:
+          test-name: Subtracao
+          setup-command: ""
+          command: ./tempo
+          input: |
+            1
+            1 0 0
+            2
+            0 30 0
+            5
+            0
+          expected-output: "Diferenca (A - B): 00:30:00"
+          comparison-method: contains
+          timeout: 10
+          max-score: 2
+
+      - name: Test Comparacao (==)
+        id: tempo_comparacao
+        uses: classroom-resources/autograding-io-grader@v1
+        with:
+          test-name: Comparacao
+          setup-command: ""
+          command: ./tempo
+          input: |
+            1
+            0 2 0
+            2
+            0 1 90
+            6
+            0
+          expected-output: "Robo A == Robo B: 0"
+          comparison-method: contains
+          timeout: 10
+          max-score: 2
+
+      - name: Test Incremento (++pre)
+        id: tempo_incremento
+        uses: classroom-resources/autograding-io-grader@v1
+        with:
+          test-name: Incremento
+          setup-command: ""
+          command: ./tempo
+          input: |
+            1
+            0 0 59
+            7
+            0
+          expected-output: "Depois do pre-incremento: 00:01:00"
+          comparison-method: contains
+          timeout: 10
+          max-score: 1
+
+      - name: Test Normalizacao
+        id: tempo_normalizacao
+        uses: classroom-resources/autograding-io-grader@v1
+        with:
+          test-name: Normalizacao
+          setup-command: ""
+          command: ./tempo
+          input: |
+            1
+            1 70 80
+            3
+            0
+          expected-output: "Robo A: 02:11:20"
+          comparison-method: contains
+          timeout: 10
+          max-score: 1
+
+      - name: Test Entrada Saida (<<, >>)
+        id: tempo_entrada_saida
+        uses: classroom-resources/autograding-io-grader@v1
+        with:
+          test-name: EntradaSaida
+          setup-command: ""
+          command: ./tempo
+          input: |
+            1
+            2 5 9
+            3
+            0
+          expected-output: "Robo A: 02:05:09"
+          comparison-method: contains
+          timeout: 10
+          max-score: 2
+
+      - name: Autograding Reporter
+        uses: classroom-resources/autograding-grading-reporter@v1
+        env:
+          TEMPO_SOMA_RESULTS: "${{ steps.tempo_soma.outputs.result }}"
+          TEMPO_SUBTRACAO_RESULTS: "${{ steps.tempo_subtracao.outputs.result }}"
+          TEMPO_COMPARACAO_RESULTS: "${{ steps.tempo_comparacao.outputs.result }}"
+          TEMPO_INCREMENTO_RESULTS: "${{ steps.tempo_incremento.outputs.result }}"
+          TEMPO_NORMALIZACAO_RESULTS: "${{ steps.tempo_normalizacao.outputs.result }}"
+          TEMPO_ENTRADA_SAIDA_RESULTS: "${{ steps.tempo_entrada_saida.outputs.result }}"
+        with:
+          runners: tempo_soma,tempo_subtracao,tempo_comparacao,tempo_incremento,tempo_normalizacao,tempo_entrada_saida
